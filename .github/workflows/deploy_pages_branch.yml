@@ -1,4 +1,4 @@
-name: Build & Deploy Flutter Web (gh-pages)
+name: Deploy Flutter Web to GitHub Pages (gh-pages)
 
 on:
   push:
@@ -9,8 +9,9 @@ permissions:
   contents: write
 
 jobs:
-  build-deploy:
+  deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,7 +20,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.38.7"
-          channel: "stable"
+          channel: stable
           cache: true
 
       - name: Build Web
@@ -27,6 +28,10 @@ jobs:
           cd app
           flutter pub get
           flutter build web --release --base-href "/ejar-sanaa/"
+
+      - name: Disable Jekyll
+        run: |
+          touch app/build/web/.nojekyll
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4
