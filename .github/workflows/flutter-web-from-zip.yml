@@ -1,1 +1,50 @@
+name: Build Flutter Web From ZIP
 
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  build-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unzip project
+        run: |
+          ls -la
+          unzip -o ejar_sanaa.zip -d app
+          ls -la app
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Prepare Flutter project
+        run: |
+          cd app
+          if [ -f pubspec.yaml ]; then
+            echo "pubspec found at app/"
+          else
+            cd */ || true
+          fi
+          flutter --version
+          flutter create .
+          flutter pub get
+
+      - name: Build web
+        run: |
+          cd app
+          if [ -f pubspec.yaml ]; then
+            :
+          else
+            cd */ || true
+          fi
+          flutter build web --release
+
+      - name: Upload web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: app/**/build/web
