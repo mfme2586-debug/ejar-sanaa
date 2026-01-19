@@ -28,8 +28,8 @@ jobs:
           unzip -o ejar_sanaa.zip -d app
           echo "=== After unzip ==="
           ls -la app
-          echo "=== Expect app/ejar_sanaa ==="
-          ls -la app/ejar_sanaa || true
+          echo "=== app/ejar_sanaa (project root) ==="
+          ls -la app/ejar_sanaa
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -38,10 +38,19 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Build Web
+      - name: Flutter pub get
         run: |
           cd app/ejar_sanaa
           flutter pub get
+
+      - name: Configure Web (create web/ folder if missing)
+        run: |
+          cd app/ejar_sanaa
+          flutter create . --platforms web
+
+      - name: Build Web
+        run: |
+          cd app/ejar_sanaa
           flutter build web --release --base-href "/ejar-sanaa/"
           touch build/web/.nojekyll
           echo "=== build/web contents ==="
