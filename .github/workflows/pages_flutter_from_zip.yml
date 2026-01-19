@@ -28,6 +28,8 @@ jobs:
           unzip -o ejar_sanaa.zip -d app
           echo "=== After unzip ==="
           ls -la app
+          echo "=== Expect app/ejar_sanaa ==="
+          ls -la app/ejar_sanaa || true
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -36,28 +38,20 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Resolve project folder (where pubspec.yaml is)
-        run: |
-          set -e
-          if [ -f app/pubspec.yaml ]; then
-            echo "PROJECT_DIR=app" >> $GITHUB_ENV
-          else
-            PROJECT_DIR=$(find app -maxdepth 2 -name pubspec.yaml -print -quit | xargs -I{} dirname {})
-            echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
-          fi
-          echo "Using PROJECT_DIR=$PROJECT_DIR"
-
       - name: Build Web
         run: |
-          cd "${{ env.PROJECT_DIR }}"
+          cd app/ejar_sanaa
           flutter pub get
           flutter build web --release --base-href "/ejar-sanaa/"
           touch build/web/.nojekyll
+          echo "=== build/web contents ==="
+          ls -la build/web
+          test -f build/web/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ${{ env.PROJECT_DIR }}/build/web
+          path: app/ejar_sanaa/build/web
 
   deploy:
     needs: build
