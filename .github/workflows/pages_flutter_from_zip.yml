@@ -1,0 +1,69 @@
+name: Deploy Flutter Web (from ZIP) to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Unzip Flutter project
+        run: |
+          rm -rf app
+          mkdir -p app
+          unzip -o ejar_sanaa.zip -d app
+          echo "=== After unzip ==="
+          ls -la app
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.38.7"
+          channel: stable
+          cache: true
+
+      - name: Resolve project folder (where pubspec.yaml is)
+        run: |
+          set -e
+          if [ -f app/pubspec.yaml ]; then
+            echo "PROJECT_DIR=app" >> $GITHUB_ENV
+          else
+            PROJECT_DIR=$(find app -maxdepth 2 -name pubspec.yaml -print -quit | xargs -I{} dirname {})
+            echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
+          fi
+          echo "Using PROJECT_DIR=$PROJECT_DIR"
+
+      - name: Build Web
+        run: |
+          cd "${{ env.PROJECT_DIR }}"
+          flutter pub get
+          flutter build web --release --base-href "/ejar-sanaa/"
+          touch build/web/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ env.PROJECT_DIR }}/build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
