@@ -1,4 +1,4 @@
-name: Deploy Flutter Web to GitHub Pages
+name: Deploy Flutter Web (GitHub Pages)
 
 on:
   push:
@@ -25,16 +25,17 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.38.7"
-          channel: "stable"
+          channel: stable
           cache: true
 
-      - name: Install deps & Build web
+      - name: Build Web
         run: |
           cd app
           flutter pub get
           flutter build web --release --base-href "/ejar-sanaa/"
+          touch build/web/.nojekyll
 
-      - name: Upload artifact
+      - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: app/build/web
@@ -44,8 +45,6 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
-        id: deployment
         uses: actions/deploy-pages@v4
